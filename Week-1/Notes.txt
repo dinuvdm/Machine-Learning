@@ -1,1 +1,147 @@
+---
 
+## 🔹 What is One-Hot Encoding?
+
+**One-hot encoding** is a method to convert **categorical variables** (like "PULocationID" or "DOLocationID") into a numerical format that machine learning algorithms can use.
+
+### Example:
+
+Suppose we have a column `PULocationID` with values:
+
+```
+['100', '101', '102']
+```
+
+One-hot encoding transforms it into:
+
+```
+[1, 0, 0] → for '100'
+[0, 1, 0] → for '101'
+[0, 0, 1] → for '102'
+```
+
+Each category gets its own binary (0/1) column. This avoids implying any numeric relationship between categories (like 100 < 101).
+
+In my code:
+
+```python
+dv = DictVectorizer()
+X_train = dv.fit_transform(train_dicts)
+```
+
+`DictVectorizer` automatically applies one-hot encoding to the categorical features in each dictionary.
+
+---
+
+## 🔹 What is Linear Regression?
+
+**Linear regression** is a supervised machine learning algorithm used for **regression tasks** (predicting numeric values).
+
+It assumes a **linear relationship** between input features $X$ and the target variable $y$:
+
+$$
+y = w_1.x_1 + w_2.x_2 + ....... + w_n.x_n + b
+$$
+
+
+
+Where:
+
+* $x_1, x_2, ..., x_n$ are the features (e.g. pickup location, dropoff location, trip distance),
+* $w_1, ..., w_n$ are weights learned by the model,
+* $b$ is the bias (intercept),
+* $y$ is the predicted duration.
+
+---
+
+## 🔹 Explanation of  Code on NYC Taxi Data
+
+### 1. **Select Columns**
+
+```python
+categorical = ['PULocationID', 'DOLocationID']
+numerical = ['trip_distance']
+```
+
+You're using pickup and drop-off location IDs (categorical) and trip distance (numerical) as features to predict trip **duration**.
+
+---
+
+### 2. **Convert Categorical Columns to Strings**
+
+```python
+df[categorical] = df[categorical].astype(str)
+df_val[categorical] = df_val[categorical].astype(str)
+```
+
+This is necessary because `DictVectorizer` only recognizes string keys for categorical encoding.
+
+---
+
+### 3. **Convert Rows into Dictionary Format**
+
+```python
+train_dicts = df[categorical + numerical].to_dict(orient='records')
+```
+
+Each row becomes a dictionary like:
+
+```python
+{'PULocationID': '132', 'DOLocationID': '148', 'trip_distance': 3.7}
+```
+
+---
+
+### 4. **Apply One-Hot Encoding with `DictVectorizer`**
+
+```python
+dv = DictVectorizer()
+X_train = dv.fit_transform(train_dicts)
+```
+
+This step:
+
+* One-hot encodes the categorical columns,
+* Keeps the numeric column as-is,
+* Produces a sparse feature matrix `X_train`.
+
+---
+
+### 5. **Prepare Validation Data the Same Way**
+
+```python
+val_dicts = df_val[categorical + numerical].to_dict(orient='records')
+X_val = dv.transform(val_dicts)
+```
+
+You transform the validation set using the same encoder (`dv`) so the feature structure matches.
+
+---
+
+### 6. **Train Linear Regression Model**
+
+```python
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+```
+
+Here, the model learns how trip features relate to trip **duration**.
+
+---
+
+### 7. **Evaluate with RMSE**
+
+```python
+y_pred = lr.predict(X_train)
+rmse = mean_squared_error(y_train, y_pred, squared=False)
+```
+
+You measure performance using **Root Mean Squared Error (RMSE)**, which shows how far off predictions are from actual durations on average.
+
+---
+
+## 🔚 Summary
+
+***converted categorical features** using one-hot encoding.
+*Used a **linear regression model** to predict trip durations based on location and distance.
+***Trained and evaluated** the model using the RMSE metric.
